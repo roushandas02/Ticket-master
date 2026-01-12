@@ -22,9 +22,14 @@ const Navbar2 = () => {
       <div style={styles.right}>
         {user && <span style={styles.username}>{user}</span>}
         {user === null ? (
-            <Link to="/register">
-                <button style={styles.button}>Sign in</button>
+          <>
+            <Link to="/login">
+                <button style={styles.button}>Log in</button>
             </Link>
+            <Link to="/register">
+                <button style={styles.button}>Sign up</button>
+            </Link>
+          </>
             ) : (
             <button onClick={logout} style={styles.button}>
                 Log Out

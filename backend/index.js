@@ -1,11 +1,13 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import dotenv from "dotenv";
 import authRouter from "./routers/authRouter.js";
 import connectDB from "./config/db.js";
-dotenv.config();
+import eventRouter from "./routers/eventRouter.js";
+
 
 
 const app=express();
@@ -18,6 +20,7 @@ app.use(cors({
     credentials: true
 }));
 app.use("/api/auth",authRouter);
+app.use("/api/events",eventRouter);
 
 
 app.listen(PORT,()=>{

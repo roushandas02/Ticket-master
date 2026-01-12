@@ -69,7 +69,11 @@ export default function Login() {
         }
         console.log(response);
         setUser(response.data.user.name);
-        navigate("/dashboard");
+        //IF USER IS ADMIN
+        if(response.data.user.role=="admin")
+          navigate("/dashboard");//------------------admin homepage
+        else
+          navigate("/dashboard");
     } catch (error) {
       console.error(error);
     }

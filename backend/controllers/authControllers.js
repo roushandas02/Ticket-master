@@ -29,6 +29,9 @@ export const Login=async (req,res)=>{
     if(data.email){
         const {email}=req.body;
         user = await User.findOne({ email });
+    }else if(data.username){
+        const {username}=req.body;
+        user = await User.findOne({ email: username });
     }else{
         const {roll}=req.body;
         user = await User.findOne({ roll });
