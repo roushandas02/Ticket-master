@@ -1,13 +1,13 @@
 import { useContext, useState } from "react";
 import AnimatedAuthTitle from "../../components/AnimatedAuthTitle";
 import axios from "axios";
-import { AuthContext } from "../../context/Authcontext";
+import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const BACKEND_URL="http://localhost:5000"
 
 export default function Login() {
-  const {setUser}=useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const navigate=useNavigate();
 
   const [mode, setMode] = useState("user");
@@ -68,12 +68,13 @@ export default function Login() {
           response=await axios.post(`${BACKEND_URL}/api/auth/login`,nonIIESTCredentials);
         }
         console.log(response);
-        setUser(response.data.user.name);
-        //IF USER IS ADMIN
-        if(response.data.user.role=="admin")
-          navigate("/dashboard");//------------------admin homepage
-        else
+        const { user, accessToken } = response.data;
+        login(user, accessToken);
+        if (user?.role === "admin") {
+          navigate("/admin");
+        } else {
           navigate("/dashboard");
+        }
     } catch (error) {
       console.error(error);
     }

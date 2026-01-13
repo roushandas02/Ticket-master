@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import { AuthContext } from "../context/Authcontext";
+import { AuthContext } from "../context/AuthContext";
 
 const Navbar2 = () => {
-    const {user,logout}=useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
 
   return (
     <nav style={styles.navbar}>
@@ -20,8 +20,8 @@ const Navbar2 = () => {
 
       {/* Right Section */}
       <div style={styles.right}>
-        {user && <span style={styles.username}>{user}</span>}
-        {user === null ? (
+        {user && <span style={styles.username}>{user?.name || ""}</span>}
+        {!user ? (
           <>
             <Link to="/login">
                 <button style={styles.button}>Log in</button>
@@ -31,9 +31,16 @@ const Navbar2 = () => {
             </Link>
           </>
             ) : (
-            <button onClick={logout} style={styles.button}>
-                Log Out
-            </button>
+            <>
+              {user?.role === "admin" && (
+                <Link to="/admin" style={{ ...styles.link, fontWeight: 600 }}>
+                  Admin Dashboard
+                </Link>
+              )}
+              <button onClick={logout} style={styles.button}>
+                  Log Out
+              </button>
+            </>
             )}
 
       </div>

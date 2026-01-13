@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import AnimatedAuthTitle from "../../components/AnimatedAuthTitle";
 import axios from "axios";
-import { AuthContext } from "../../context/Authcontext";
+import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const BACKEND_URL="http://localhost:5000"

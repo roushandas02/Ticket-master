@@ -7,8 +7,9 @@ import Eventdetail from "../pages/Events/Eventdetail";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import Dashboard from "../pages/Dashboard/Dashboard";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
 import Navbar2 from "../components/Navbar2";
-import { AuthContext } from "../context/Authcontext";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AppRouter() {
   const { user } = useContext(AuthContext);
@@ -26,18 +27,43 @@ export default function AppRouter() {
         {/* Auth Routes */}
         <Route
           path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+          element={
+            user ? (
+              <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />
+            ) : (
+              <Login />
+            )
+          }
         />
         <Route
           path="/register"
-          element={user ? <Navigate to="/dashboard" replace /> : <Register />}
+          element={
+            user ? (
+              <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />
+            ) : (
+              <Register />
+            )
+          }
         />
 
-        {/* Protected Route */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={user ? <Dashboard /> : <Navigate to="/login" replace />}
         />
+        <Route
+          path="/admin"
+          element={
+            user && user.role === "admin" ? (
+              <AdminDashboard />
+            ) : (
+              <Navigate to={user ? "/dashboard" : "/login"} replace />
+            )
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
