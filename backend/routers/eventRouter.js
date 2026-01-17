@@ -5,7 +5,7 @@ import { Create, EventList } from "../controllers/eventControllers.js";
 
 const eventRouter=express.Router();
 
-eventRouter.post("/create",isAuth,upload.single("image"),Create);
-eventRouter.get("/list",isAuth,EventList);
+eventRouter.post("/create",upload.single("image"),Create);
+eventRouter.get("/list",EventList);
 
 export default eventRouter;

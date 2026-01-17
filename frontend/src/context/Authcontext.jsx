@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { setAccessToken } from "../api/axios";
 
 export const AuthContext = createContext(null);
 
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, accessToken) => {
     setUser(userData || null);
     setToken(accessToken || null);
+    setAccessToken(accessToken || null);
   };
 
   const logout = async () => {
@@ -77,6 +79,7 @@ export const AuthProvider = ({ children }) => {
 
   const contextValue = useMemo(
     () => ({
+      BACKEND_URL,
       user,
       token,
       login,

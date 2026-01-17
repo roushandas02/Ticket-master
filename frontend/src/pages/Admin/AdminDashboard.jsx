@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
+import api from "../../api/axios";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -19,7 +20,7 @@ const initialFormState = {
 };
 
 const AdminDashboard = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
@@ -44,10 +45,17 @@ const AdminDashboard = () => {
   const loadEvents = async () => {
     setLoadingEvents(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/events/list`);
+      const response = await api.get(`/events/list`,null,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
       const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
       setEvents(data);
       setStatus({ type: "idle", message: "" });
+      console.log(response);
     } catch (error) {
       console.error("Failed to load events", error);
       setStatus({
@@ -114,7 +122,7 @@ const AdminDashboard = () => {
     setCreatingEvent(true);
 
     try {
-      await axios.post(`${API_BASE_URL}/api/events/create`, payload, {
+      await api.post(`/events/create`, payload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -138,6 +146,7 @@ const AdminDashboard = () => {
   };
 
   return (
+    <>
     <div style={styles.page}>
       <div style={styles.container}>
         <header style={styles.header}>
@@ -383,6 +392,7 @@ const AdminDashboard = () => {
         </main>
       </div>
     </div>
+    </>
   );
 };
 
@@ -390,6 +400,7 @@ const styles = {
   page: {
     minHeight: "100vh",
     width: "100%",
+    minWidth: "100vw",
     background: "linear-gradient(160deg, #0f172a 0%, #020617 60%, #000)",
     color: "#f8fafc",
     padding: "48px 48px 64px",
@@ -449,7 +460,7 @@ const styles = {
     padding: "24px",
     boxShadow: "0 20px 45px -24px rgba(15, 23, 42, 0.9)",
     backdropFilter: "blur(12px)",
-    width: "100%",
+    width: "90%",
   },
   cardHeader: {
     display: "flex",

@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import api from "../../api/axios"
+import { setAccessToken } from "../../api/axios";
+import { AuthContext } from "../../context/AuthContext";
+import axios from "axios";
 
 const cards = [
   {
@@ -80,6 +84,20 @@ export default function Home() {
     if (!selectedCard || !selectedCard.gallery?.length) return;
     setSliderIndex(prev => (prev - 1 + selectedCard.gallery.length) % selectedCard.gallery.length);
   };
+  //Auto Generate Access Token on opening website
+  // useEffect(()=>{
+  //   const { BACKEND_URL } = useContext(AuthContext);
+  //   const refresh = async () => {
+  //     try {
+  //       const res=await axios.get(`${BACKEND_URL}/auth/refresh`);
+  //       setAccessToken(res.data.accessToken);
+  //     } catch (error) {
+  //       console.log("error while fetching initial accessToken");
+  //     }
+  //   };
+  //   refresh();
+  // },[]);
+
 
   return (
     <div
