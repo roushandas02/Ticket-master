@@ -28,6 +28,12 @@ const AdminDashboard = () => {
   const [creatingEvent, setCreatingEvent] = useState(false);
   const [formState, setFormState] = useState(initialFormState);
   const [status, setStatus] = useState({ type: "idle", message: "" });
+  
+  // Statistics state
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -42,6 +48,62 @@ const AdminDashboard = () => {
     }
   }, [user, isAdmin, navigate]);
 
+  // Calculate statistics from events
+  const calculateStatistics = (eventsData) => {
+    // For demo purposes, generate random registration counts
+    // In production, this would come from actual registration data
+    let users = 0;
+    let revenue = 0;
+    const allUsers = [];
+    
+    // Sample names for mock data
+    const sampleNames = [
+      "Rahul Kumar", "Priya Singh", "Amit Sharma", "Sneha Patel", "Arjun Reddy",
+      "Ananya Gupta", "Vikram Malhotra", "Riya Verma", "Karan Mehta", "Pooja Joshi",
+      "Rohan Das", "Neha Kapoor", "Siddharth Rao", "Divya Nair", "Aditya Iyer",
+      "Kavya Menon", "Varun Khanna", "Ishita Banerjee", "Nikhil Desai", "Sakshi Agarwal"
+    ];
+    
+    const colleges = [
+      "IIEST Shibpur", "IIT Kharagpur", "Jadavpur University", "Presidency University",
+      "Calcutta University", "NIT Durgapur", "Heritage Institute", "Techno India"
+    ];
+    
+    eventsData.forEach((event, eventIndex) => {
+      // Simulate 10-50 registrations per event
+      const registrations = Math.floor(Math.random() * 41) + 10;
+      users += registrations;
+      
+      // Generate mock users for this event
+      for (let i = 0; i < registrations; i++) {
+        const nameIndex = (eventIndex * 10 + i) % sampleNames.length;
+        const collegeIndex = Math.floor(Math.random() * colleges.length);
+        const isIIEST = Math.random() > 0.6;
+        
+        allUsers.push({
+          id: `user-${eventIndex}-${i}`,
+          name: sampleNames[nameIndex],
+          email: `${sampleNames[nameIndex].toLowerCase().replace(/ /g, '.')}@${isIIEST ? 'student.iiests.ac.in' : 'gmail.com'}`,
+          college: colleges[collegeIndex],
+          event: event.name,
+          registrationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN'),
+          iiestian: isIIEST,
+        });
+      }
+      
+      // Calculate revenue: parse fee amount and multiply by registrations
+      const feeMatch = event.fees?.match(/[\d,]+/);
+      if (feeMatch) {
+        const feeAmount = parseInt(feeMatch[0].replace(/,/g, ''));
+        revenue += feeAmount * registrations;
+      }
+    });
+    
+    setTotalUsers(users);
+    setTotalRevenue(revenue);
+    setRegisteredUsers(allUsers);
+  };
+
   const loadEvents = async () => {
     setLoadingEvents(true);
     try {
@@ -54,6 +116,7 @@ const AdminDashboard = () => {
       );
       const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
       setEvents(data);
+      calculateStatistics(data);
       setStatus({ type: "idle", message: "" });
       console.log(response);
     } catch (error) {
@@ -159,6 +222,43 @@ const AdminDashboard = () => {
           Logout
         </button>
       </header>
+
+      {/* Statistics Cards */}
+      <section style={styles.statsSection}>
+        <div 
+          style={{...styles.statCard, cursor: 'pointer'}} 
+          onClick={() => setShowUsersModal(true)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 24px 55px -24px rgba(37, 99, 235, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 20px 45px -24px rgba(15, 23, 42, 0.9)';
+          }}
+        >
+          <div style={styles.statIcon}>👥</div>
+          <div style={styles.statContent}>
+            <h3 style={styles.statValue}>{totalUsers.toLocaleString()}</h3>
+            <p style={styles.statLabel}>Total Registered Users</p>
+            <p style={{fontSize: '0.75rem', color: '#60a5fa', margin: '4px 0 0 0'}}>Click to view details →</p>
+          </div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statIcon}>💰</div>
+          <div style={styles.statContent}>
+            <h3 style={styles.statValue}>₹{totalRevenue.toLocaleString()}</h3>
+            <p style={styles.statLabel}>Total Revenue</p>
+          </div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statIcon}>🎉</div>
+          <div style={styles.statContent}>
+            <h3 style={styles.statValue}>{events.length}</h3>
+            <p style={styles.statLabel}>Total Events</p>
+          </div>
+        </div>
+      </section>
 
         <main style={styles.mainContent}>
         <section style={styles.card}>
@@ -391,6 +491,61 @@ const AdminDashboard = () => {
         </section>
         </main>
       </div>
+
+      {/* Users Modal */}
+      {showUsersModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowUsersModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Registered Users ({registeredUsers.length})</h2>
+              <button 
+                style={styles.modalCloseBtn} 
+                onClick={() => setShowUsersModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={styles.modalBody}>
+              <div style={styles.tableWrapper}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr style={styles.tr}>
+                      <th style={styles.th}>Name</th>
+                      <th style={styles.th}>Email</th>
+                      <th style={styles.th}>College</th>
+                      <th style={styles.th}>Event</th>
+                      <th style={styles.th}>Registration Date</th>
+                      <th style={styles.th}>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registeredUsers.map((user) => (
+                      <tr key={user.id} style={styles.tr}>
+                        <td style={styles.td}>{user.name}</td>
+                        <td style={styles.td}>{user.email}</td>
+                        <td style={styles.td}>{user.college}</td>
+                        <td style={styles.td}>{user.event}</td>
+                        <td style={styles.td}>{user.registrationDate}</td>
+                        <td style={styles.td}>
+                          <span style={{
+                            ...styles.badge,
+                            background: user.iiestian ? 'rgba(34, 197, 94, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                            color: user.iiestian ? '#86efac' : '#93c5fd',
+                            border: user.iiestian ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)',
+                          }}>
+                            {user.iiestian ? 'IIEST' : 'External'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
@@ -598,6 +753,118 @@ const styles = {
     padding: "14px 16px",
     fontSize: "14px",
     color: "#e2e8f0",
+  },
+  statsSection: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "24px",
+    padding: "0 clamp(24px, 6vw, 80px)",
+    marginTop: "32px",
+    marginBottom: "32px",
+  },
+  statCard: {
+    background: "linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(15, 23, 42, 0.85) 100%)",
+    borderRadius: "20px",
+    border: "1px solid rgba(148, 163, 184, 0.2)",
+    padding: "28px",
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+    boxShadow: "0 20px 45px -24px rgba(15, 23, 42, 0.9)",
+    backdropFilter: "blur(12px)",
+    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+    cursor: "default",
+  },
+  statIcon: {
+    fontSize: "3rem",
+    lineHeight: 1,
+    filter: "drop-shadow(0 4px 12px rgba(37, 99, 235, 0.4))",
+  },
+  statContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  statValue: {
+    fontSize: "2.2rem",
+    fontWeight: 700,
+    margin: 0,
+    color: "#e0f2fe",
+    letterSpacing: "0.02em",
+  },
+  statLabel: {
+    fontSize: "0.9rem",
+    color: "#94a3b8",
+    margin: 0,
+    fontWeight: 500,
+    letterSpacing: "0.02em",
+  },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px",
+  },
+  modalContent: {
+    background: "linear-gradient(160deg, #1a1f2b 0%, #0f1419 80%)",
+    borderRadius: "20px",
+    border: "1px solid rgba(148, 163, 184, 0.25)",
+    boxShadow: "0 28px 60px rgba(0, 0, 0, 0.65)",
+    maxWidth: "1200px",
+    width: "100%",
+    maxHeight: "85vh",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "24px 32px",
+    borderBottom: "1px solid rgba(148, 163, 184, 0.15)",
+  },
+  modalTitle: {
+    fontSize: "1.8rem",
+    fontWeight: 700,
+    margin: 0,
+    color: "#90caf9",
+  },
+  modalCloseBtn: {
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    border: "none",
+    background: "rgba(255, 255, 255, 0.1)",
+    color: "#fff",
+    fontSize: "28px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 0.3s ease",
+  },
+  modalBody: {
+    padding: "24px 32px",
+    overflowY: "auto",
+    flex: 1,
+  },
+  tableWrapper: {
+    overflowX: "auto",
+  },
+  badge: {
+    display: "inline-block",
+    padding: "4px 12px",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
   },
 };
 

@@ -62,7 +62,7 @@ export default function Events() {
           {events.map(event => (
             <article className="event-card" key={event.name}>
               <div className="event-card-media">
-                <img src={event.image} alt={event.name} loading="lazy" />
+                <img src={event.image} alt={event.name} />
               </div>
               <div className="event-card-body">
                 <h2>{event.name}</h2>
@@ -85,42 +85,29 @@ export default function Events() {
       </div>
 
       <style>{`
-        * {
-          box-sizing: border-box;
-        }
-        
         .events-page {
           min-height: 100vh;
           width: 100vw;
           overflow-x: hidden;
-          overflow-y: auto;
           background: linear-gradient(140deg, rgba(12, 18, 30, 0.88) 0%, rgba(5, 5, 7, 0.92) 65%), #020202;
           position: relative;
           color: #f4f5f9;
-          scroll-behavior: smooth;
-          -webkit-overflow-scrolling: touch;
         }
-        
         .events-page::before,
         .events-page::after {
           content: "";
-          position: fixed;
+          position: absolute;
           inset: -180px;
           background: radial-gradient(circle, rgba(31, 84, 152, 0.35), transparent 68%);
-          filter: blur(100px);
-          opacity: 0.3;
+          filter: blur(180px);
+          opacity: 0.45;
           animation: eventsBgPulse 28s linear infinite;
           z-index: 0;
-          will-change: transform;
-          pointer-events: none;
-          transform: translateZ(0);
         }
-        
         .events-page::after {
           animation-direction: reverse;
-          opacity: 0.2;
+          opacity: 0.32;
         }
-        
         .events-wrapper {
           position: relative;
           z-index: 1;
@@ -130,28 +117,24 @@ export default function Events() {
           display: flex;
           flex-direction: column;
           gap: clamp(40px, 6vw, 72px);
+          box-sizing: border-box;
         }
-        
         .events-hero {
           text-align: center;
           display: grid;
           gap: 12px;
         }
-        
         .events-kicker {
           text-transform: uppercase;
           letter-spacing: 6px;
           font-size: 13px;
           color: #8ab4ff;
-          font-weight: 700;
-          margin: 0;
+          display: inline-block;
         }
-        
         .events-title {
-          font-size: clamp(2.2rem, 5vw, 3.8rem);
+          font-size: clamp(2.4rem, 5vw, 3.5rem);
           font-weight: 800;
-          margin: 0;
-          letter-spacing: 2px;
+          letter-spacing: 0.06em;
           text-transform: uppercase;
           background: linear-gradient(120deg, #bbdefb, #42a5f5, #90caf9);
           background-clip: text;
@@ -159,7 +142,6 @@ export default function Events() {
           color: transparent;
           filter: drop-shadow(0 0 24px rgba(66, 165, 245, 0.45));
         }
-        
         .events-subtitle {
           max-width: 720px;
           margin: 0 auto;
@@ -167,12 +149,10 @@ export default function Events() {
           line-height: 1.7;
           font-size: clamp(1rem, 2.2vw, 1.1rem);
         }
-        
         .events-list {
           display: grid;
           gap: 28px;
         }
-        
         .event-card {
           display: flex;
           flex-direction: row;
@@ -182,56 +162,44 @@ export default function Events() {
           overflow: hidden;
           border: 1px solid rgba(144, 202, 249, 0.18);
           box-shadow: 0 24px 48px rgba(5, 10, 20, 0.45);
-          backdrop-filter: blur(6px);
-          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          backdrop-filter: blur(18px);
+          transition: transform 0.4s ease, box-shadow 0.4s ease;
           width: min(1344px, 100%);
           margin: 0 auto;
-          will-change: transform;
-          transform: translateZ(0);
         }
-        
         .event-card:hover {
-          transform: translateY(-6px) translateZ(0);
+          transform: translateY(-10px);
           box-shadow: 0 32px 64px rgba(5, 10, 20, 0.55);
         }
-        
         .event-card-media {
           flex: 0 0 320px;
           overflow: hidden;
         }
-        
         .event-card-media img {
           width: 100%;
           height: 100%;
           object-fit: cover;
           filter: brightness(0.9);
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          will-change: transform;
-          transform: translateZ(0);
+          transition: transform 0.6s ease;
         }
-        
         .event-card:hover .event-card-media img {
-          transform: scale(1.03) translateZ(0);
+          transform: scale(1.06);
         }
-        
         .event-card-body {
           display: grid;
           gap: 12px;
           padding: clamp(20px, 4vw, 32px);
         }
-        
         .event-card-body h2 {
           font-size: clamp(1.6rem, 3vw, 2rem);
           margin: 0;
           font-weight: 700;
           color: #e9f2ff;
         }
-        
         .event-card-description {
           color: #b9c5d6;
           line-height: 1.6;
         }
-        
         .event-card-meta {
           display: flex;
           flex-direction: column;
@@ -239,28 +207,23 @@ export default function Events() {
           color: #9fc3ff;
           font-weight: 600;
         }
-        
         .event-card-date {
           display: inline-flex;
           align-items: center;
           gap: 8px;
         }
-        
         .event-card-date::before {
           content: "📅";
         }
-        
         .event-card-prize {
           display: inline-flex;
           align-items: center;
           gap: 8px;
           color: #ffdea9;
         }
-        
         .event-card-prize::before {
           content: "🏆";
         }
-        
         .event-card-cta {
           justify-self: flex-start;
           padding: 10px 22px;
@@ -270,16 +233,12 @@ export default function Events() {
           color: white;
           font-weight: 600;
           cursor: pointer;
-          transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          will-change: transform;
-          transform: translateZ(0);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        
         .event-card-cta:hover {
-          transform: translateY(-2px) translateZ(0);
+          transform: translateY(-2px);
           box-shadow: 0 16px 32px rgba(25, 118, 210, 0.45);
         }
-        
         @media (max-width: 1024px) {
           .events-wrapper {
             padding: 72px clamp(18px, 6vw, 60px);
@@ -293,7 +252,6 @@ export default function Events() {
             max-height: 240px;
           }
         }
-        
         @media (max-width: 640px) {
           .events-wrapper {
             padding: 48px 16px;
@@ -305,19 +263,19 @@ export default function Events() {
             padding: 20px;
           }
         }
-        
         @keyframes eventsBgPulse {
           0% {
-            transform: rotate(0deg) scale(1) translateZ(0);
+            transform: rotate(0deg) scale(1);
           }
           50% {
-            transform: rotate(180deg) scale(1.05) translateZ(0);
+            transform: rotate(180deg) scale(1.1);
           }
           100% {
-            transform: rotate(360deg) scale(1) translateZ(0);
+            transform: rotate(360deg) scale(1);
           }
         }
       `}</style>
     </div>
   );
 }
+  

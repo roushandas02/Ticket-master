@@ -89,3 +89,20 @@ export const Logout=(req,res)=>{
     })
     return res.status(200).json({ message: "Logged out successfully" });
 };
+
+// Get all users (Admin only)
+export const GetAllUsers = async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('-passwordHash') // Exclude password hash
+            .sort({ createdAt: -1 }); // Most recent first
+        
+        res.status(200).json({
+            count: users.length,
+            users
+        });
+    } catch (err) {
+        console.error('Fetch users error:', err);
+        res.status(500).json({ message: 'Failed to fetch users' });
+    }
+};

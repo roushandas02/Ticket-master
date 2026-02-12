@@ -1,13 +1,15 @@
-﻿import { VerifyAccessToken } from "../config/token.js";
+import { VerifyAccessToken } from "../config/token.js";
 
 const isAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  console.log(authHeader);
-  if (!authHeader) {
-    return res.status(401).json({ message: "Missing Authorization header" });
+  const authHeader = req.headers.authorization || "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Missing or invalid Authorization header" });
   }
 
-  const token = authHeader.split()[1];
+  const token = authHeader.split(" ")[1]?.trim();
+  if (!token) {
+    return res.status(401).json({ message: "Missing access token" });
+  }
 
   try {
     const payload = VerifyAccessToken(token);

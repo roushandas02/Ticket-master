@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import RegistrationForm from "../../components/RegistrationForm";
 
 const EVENT_DETAILS = [
   {
@@ -95,8 +97,11 @@ const EVENT_DETAILS = [
 export default function Eventdetail() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const event = useMemo(() => EVENT_DETAILS.find(entry => entry.slug === id), [id]);
   const eventTitle = event?.name ?? "Event";
   const teamRange = event
@@ -160,9 +165,26 @@ export default function Eventdetail() {
                     </>
                   )}
                 </div>
-                <button className="event-register" type="button">
-                  Register Now
-                </button>
+                {registrationSuccess ? (
+                  <div className="event-success-message">
+                    ✓ Registration Successful!
+                  </div>
+                ) : (
+                  <button 
+                    className="event-register" 
+                    type="button"
+                    onClick={() => {
+                      if (!user) {
+                        alert("Please login to register for events");
+                        navigate("/login");
+                      } else {
+                        setShowRegistrationForm(true);
+                      }
+                    }}
+                  >
+                    Register Now
+                  </button>
+                )}
                 <span className="event-fee">Entry Fee: {event.fee}</span>
               </div>
               <div className="event-info">
@@ -211,6 +233,27 @@ export default function Eventdetail() {
           )}
         </div>
       </div>
+
+      {/* Registration Form Modal */}
+      {showRegistrationForm && event && (
+        <RegistrationForm
+          event={{
+            ...event,
+            _id: event.slug, // Using slug as ID for static data
+            fees: event.fee,
+          }}
+          onClose={() => setShowRegistrationForm(false)}
+          onSuccess={(data) => {
+            console.log("Registration successful:", data);
+            setShowRegistrationForm(false);
+            setRegistrationSuccess(true);
+            setTimeout(() => {
+              navigate("/dashboard");
+            }, 2000);
+          }}
+        />
+      )}
+
       <style>{styles}</style>
     </div>
   );
@@ -375,6 +418,26 @@ const styles = `
   .event-register:hover {
     transform: translateY(-2px);
     box-shadow: 0 22px 40px rgba(255, 112, 67, 0.38);
+  }
+  .event-success-message {
+    margin-top: clamp(16px, 3vw, 28px);
+    padding: 12px 24px;
+    background: linear-gradient(120deg, #4caf50, #66bb6a);
+    color: #fff;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 999px;
+    box-shadow: 0 16px 28px rgba(76, 175, 80, 0.28);
+    animation: successPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes successPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
   .event-fee {
     margin-top: 10px;
