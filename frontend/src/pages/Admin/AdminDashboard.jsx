@@ -34,6 +34,12 @@ const AdminDashboard = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [showUsersModal, setShowUsersModal] = useState(false);
+  
+  // Team registrations modal state
+  const [showTeamsModal, setShowTeamsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [teamRegistrations, setTeamRegistrations] = useState([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -48,75 +54,44 @@ const AdminDashboard = () => {
     }
   }, [user, isAdmin, navigate]);
 
-  // Calculate statistics from events
-  const calculateStatistics = (eventsData) => {
-    // For demo purposes, generate random registration counts
-    // In production, this would come from actual registration data
-    let users = 0;
-    let revenue = 0;
-    const allUsers = [];
-    
-    // Sample names for mock data
-    const sampleNames = [
-      "Rahul Kumar", "Priya Singh", "Amit Sharma", "Sneha Patel", "Arjun Reddy",
-      "Ananya Gupta", "Vikram Malhotra", "Riya Verma", "Karan Mehta", "Pooja Joshi",
-      "Rohan Das", "Neha Kapoor", "Siddharth Rao", "Divya Nair", "Aditya Iyer",
-      "Kavya Menon", "Varun Khanna", "Ishita Banerjee", "Nikhil Desai", "Sakshi Agarwal"
-    ];
-    
-    const colleges = [
-      "IIEST Shibpur", "IIT Kharagpur", "Jadavpur University", "Presidency University",
-      "Calcutta University", "NIT Durgapur", "Heritage Institute", "Techno India"
-    ];
-    
-    eventsData.forEach((event, eventIndex) => {
-      // Simulate 10-50 registrations per event
-      const registrations = Math.floor(Math.random() * 41) + 10;
-      users += registrations;
+  // Fetch real statistics from backend
+  const loadStatistics = async () => {
+    try {
+      const response = await api.get('/event-registration/admin/stats');
       
-      // Generate mock users for this event
-      for (let i = 0; i < registrations; i++) {
-        const nameIndex = (eventIndex * 10 + i) % sampleNames.length;
-        const collegeIndex = Math.floor(Math.random() * colleges.length);
-        const isIIEST = Math.random() > 0.6;
+      if (response.data.success) {
+        const { stats } = response.data;
+        setTotalUsers(stats.totalRegistrations);
+        setTotalRevenue(stats.totalRevenue);
         
-        allUsers.push({
-          id: `user-${eventIndex}-${i}`,
-          name: sampleNames[nameIndex],
-          email: `${sampleNames[nameIndex].toLowerCase().replace(/ /g, '.')}@${isIIEST ? 'student.iiests.ac.in' : 'gmail.com'}`,
-          college: colleges[collegeIndex],
-          event: event.name,
-          registrationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN'),
-          iiestian: isIIEST,
-        });
+        // Format registrations for the users modal
+        const formattedUsers = stats.registrations.map((reg, index) => ({
+          id: `user-${index}`,
+          name: reg.name,
+          email: reg.email,
+          college: reg.college,
+          event: reg.event,
+          registrationDate: new Date(reg.registrationDate).toLocaleDateString('en-IN'),
+          iiestian: reg.isIIEST,
+        }));
+        
+        setRegisteredUsers(formattedUsers);
       }
-      
-      // Calculate revenue: parse fee amount and multiply by registrations
-      const feeMatch = event.fees?.match(/[\d,]+/);
-      if (feeMatch) {
-        const feeAmount = parseInt(feeMatch[0].replace(/,/g, ''));
-        revenue += feeAmount * registrations;
-      }
-    });
-    
-    setTotalUsers(users);
-    setTotalRevenue(revenue);
-    setRegisteredUsers(allUsers);
+    } catch (error) {
+      console.error('Failed to load statistics:', error);
+      // Set defaults if API fails
+      setTotalUsers(0);
+      setTotalRevenue(0);
+      setRegisteredUsers([]);
+    }
   };
 
   const loadEvents = async () => {
     setLoadingEvents(true);
     try {
-      const response = await api.get(`/events/list`,null,
-        {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.get(`/events/list`);
       const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
       setEvents(data);
-      calculateStatistics(data);
       setStatus({ type: "idle", message: "" });
       console.log(response);
     } catch (error) {
@@ -130,9 +105,13 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadAllData = async () => {
+    await Promise.all([loadEvents(), loadStatistics()]);
+  };
+
   useEffect(() => {
     if (isAdmin) {
-      loadEvents();
+      loadAllData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
@@ -206,6 +185,63 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     await logout();
     navigate("/login", { replace: true });
+  };
+
+  // Handle event click to view team registrations
+  const handleEventClick = async (event) => {
+    console.log("Fetching registrations for event:", event._id);
+    setSelectedEvent(event);
+    setShowTeamsModal(true);
+    setLoadingTeams(true);
+    
+    try {
+      const response = await api.get(`/event-registration/event/${event._id}`);
+      console.log("Team registrations response:", response.data);
+      
+      if (response.data.success) {
+        setTeamRegistrations(response.data.registrations);
+        console.log("Set team registrations:", response.data.registrations);
+      }
+    } catch (error) {
+      console.error("Error fetching team registrations:", error);
+      console.error("Error response:", error.response);
+      setStatus({
+        type: "error",
+        message: error.response?.data?.message || "Failed to load team registrations",
+      });
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  // Handle delete team registration
+  const handleDeleteTeam = async (registrationId) => {
+    if (!window.confirm("Are you sure you want to remove this team?")) {
+      return;
+    }
+
+    try {
+      const response = await api.delete(`/event-registration/${registrationId}`);
+
+      if (response.data.success) {
+        // Remove the deleted registration from the list
+        setTeamRegistrations((prev) =>
+          prev.filter((reg) => reg._id !== registrationId)
+        );
+        setStatus({
+          type: "success",
+          message: "Team removed successfully",
+        });
+        setTimeout(() => setStatus({ type: "idle", message: "" }), 3000);
+      }
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      setStatus({
+        type: "error",
+        message: error.response?.data?.message || "Failed to delete team",
+      });
+      setTimeout(() => setStatus({ type: "idle", message: "" }), 3000);
+    }
   };
 
   return (
@@ -448,9 +484,9 @@ const AdminDashboard = () => {
           <div style={styles.cardHeader}>
             <div>
               <h2 style={styles.cardTitle}>Upcoming Events</h2>
-              <p style={styles.cardSubtitle}>Review and manage published events.</p>
+              <p style={styles.cardSubtitle}>Review and manage published events. Click on any event to view team registrations.</p>
             </div>
-            <button style={styles.refreshButton} onClick={loadEvents} disabled={loadingEvents}>
+            <button style={styles.refreshButton} onClick={loadAllData} disabled={loadingEvents}>
               {loadingEvents ? "Refreshing..." : "Refresh"}
             </button>
           </div>
@@ -474,7 +510,21 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {events.map((eventItem) => (
-                    <tr key={eventItem._id} style={styles.tr}>
+                    <tr 
+                      key={eventItem._id} 
+                      style={{
+                        ...styles.tr,
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onClick={() => handleEventClick(eventItem)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
                       <td style={styles.td}>{eventItem.name}</td>
                       <td style={styles.td}>
                         {eventItem.date ? new Date(eventItem.date).toLocaleString() : "TBD"}
@@ -542,6 +592,148 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Registrations Modal */}
+      {showTeamsModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowTeamsModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <div>
+                <h2 style={styles.modalTitle}>
+                  {selectedEvent?.name} - Team Registrations
+                </h2>
+                <p style={{ margin: '8px 0 0 0', color: '#94a3b8', fontSize: '14px' }}>
+                  Total Teams: {teamRegistrations.length}
+                </p>
+              </div>
+              <button 
+                style={styles.modalCloseBtn} 
+                onClick={() => setShowTeamsModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={styles.modalBody}>
+              {loadingTeams ? (
+                <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+                  Loading team registrations...
+                </div>
+              ) : teamRegistrations.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <h3 style={styles.emptyTitle}>No Teams Registered</h3>
+                  <p style={styles.emptySubtitle}>No teams have registered for this event yet.</p>
+                </div>
+              ) : (
+                <div style={styles.tableWrapper}>
+                  {teamRegistrations.map((registration, index) => (
+                    <div 
+                      key={registration._id} 
+                      style={{
+                        marginBottom: '24px',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: '1px solid rgba(148, 163, 184, 0.2)',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '16px',
+                      }}>
+                        <div>
+                          <h3 style={{
+                            margin: 0,
+                            fontSize: '18px',
+                            color: '#60a5fa',
+                            fontWeight: 600,
+                          }}>
+                            Team #{index + 1}: {registration.teamName}
+                          </h3>
+                          <p style={{
+                            margin: '4px 0 0 0',
+                            fontSize: '13px',
+                            color: '#94a3b8',
+                          }}>
+                            Team Size: {registration.teamSize} | Registered: {new Date(registration.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteTeam(registration._id)}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#fca5a5',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                          }}
+                        >
+                          🗑️ Remove Team
+                        </button>
+                      </div>
+
+                      <table style={{
+                        ...styles.table,
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                      }}>
+                        <thead>
+                          <tr>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>#</th>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>Name</th>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>Email</th>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>Phone</th>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>College</th>
+                            <th style={{...styles.th, background: 'rgba(15, 23, 42, 0.8)'}}>Roll No.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {registration.teamMembers.map((member, memberIndex) => (
+                            <tr key={memberIndex} style={styles.tr}>
+                              <td style={styles.td}>{memberIndex + 1}</td>
+                              <td style={styles.td}>{member.name}</td>
+                              <td style={styles.td}>{member.email}</td>
+                              <td style={styles.td}>{member.phone}</td>
+                              <td style={styles.td}>{member.college || '-'}</td>
+                              <td style={styles.td}>
+                                {member.roll ? (
+                                  <span style={{
+                                    ...styles.badge,
+                                    background: 'rgba(34, 197, 94, 0.15)',
+                                    color: '#86efac',
+                                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                                  }}>
+                                    {member.roll}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
