@@ -7,6 +7,8 @@ import cors from "cors";
 import authRouter from "./routers/authRouter.js";
 import connectDB from "./config/db.js";
 import eventRouter from "./routers/eventRouter.js";
+import eventRegistrationRouter from "./routers/eventRegistrationRouter.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +39,8 @@ app.options(/.*/, cors(corsOptions));
 
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventRouter);
+app.use("/api/event-registration", eventRegistrationRouter);
+
 
 app.listen(PORT, () => {
   connectDB();

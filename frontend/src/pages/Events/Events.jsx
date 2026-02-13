@@ -1,50 +1,43 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import api from "../../api/axios";
 
-const events = [
-  {
-    slug: "battle-of-the-bands",
-    name: "Battle of the Bands",
-    date: "February 21, 2025",
-    prize: "₹50,000 + Studio Recording Session",
-    image:
-      "https://images.unsplash.com/photo-1521337580396-0259d4aeb3f4?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Rock out under the stars as campus bands go head-to-head for the ultimate REBECA crown.",
-  },
-  {
-    slug: "street-football-showdown",
-    name: "Street Football Showdown",
-    date: "February 22, 2025",
-    prize: "₹25,000 + Nike Gear",
-    image:
-      "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Fast-paced futsal action with alumni and students teaming up for high-energy matches.",
-  },
-  {
-    slug: "mystic-quiz-night",
-    name: "Mystic Quiz Night",
-    date: "February 23, 2025",
-    prize: "₹15,000 + Exclusive Merchandise",
-    image:
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Brain-tickling trivia spanning pop culture, campus legends, and REBECA history.",
-  },
-  {
-    slug: "heritage-theatre-gala",
-    name: "Heritage Theatre Gala",
-    date: "February 24, 2025",
-    prize: "₹40,000 + Spotlight Trophy",
-    image:
-      "https://images.unsplash.com/photo-1515169067865-5387cf585550?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "A dramatic evening where alumni troupes revisit classics with a modern twist on the Oval stage.",
-  },
-];
+
 
 export default function Events() {
   const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await api.get("/events/list");
+        const data = res.data;
+        // console.log(data);
+        if (data) {
+          setEvents(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch events", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+    
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="events-page">
+        <h2 style={{ textAlign: "center", marginTop: "100px" }}>
+          Loading events...
+        </h2>
+      </div>
+    );
+  }
 
   return (
     <div className="events-page">
@@ -60,7 +53,7 @@ export default function Events() {
 
         <div className="events-list">
           {events.map(event => (
-            <article className="event-card" key={event.name}>
+            <article className="event-card" key={event._id}>
               <div className="event-card-media">
                 <img src={event.image} alt={event.name} loading="lazy" />
               </div>
@@ -68,13 +61,25 @@ export default function Events() {
                 <h2>{event.name}</h2>
                 <p className="event-card-description">{event.description}</p>
                 <div className="event-card-meta">
-                  <span className="event-card-date">{event.date}</span>
+                  <span className="event-card-date">
+                    {new Date(event.date).toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </span>
+
+
                   <span className="event-card-prize">{event.prize}</span>
                 </div>
+
                 <button
                   className="event-card-cta"
                   type="button"
-                  onClick={() => navigate(`/events/${event.slug}`)}
+                  onClick={() => navigate(`/events/${event._id}`)}
                 >
                   View Details
                 </button>

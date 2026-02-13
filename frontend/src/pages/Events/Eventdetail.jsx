@@ -2,97 +2,10 @@ import { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import RegistrationForm from "../../components/RegistrationForm";
+import api from "../../api/axios";
+import { normalizeTeamSize } from "../../utils/eventUtils";
 
-const EVENT_DETAILS = [
-  {
-    slug: "battle-of-the-bands",
-    name: "Battle of the Bands",
-    category: "Music",
-    poster:
-      "https://images.unsplash.com/photo-1515169067865-5387cf585550?auto=format&fit=crop&w=1600&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1515169067865-5387cf585550?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1600&q=80",
-    ],
-    fee: "₹1,500",
-    date: "February 21, 2025 • 6:30 PM",
-    venue: "Oval Stage",
-    min_team_size: 3,
-    max_team_size: 6,
-    rules: [
-      "Original compositions and covers are both allowed (max 6-minute performance).",
-      "At least one alumni member per band is mandatory.",
-      "Use of pyrotechnics or open flames is prohibited.",
-    ],
-  },
-  {
-    slug: "street-football-showdown",
-    name: "Street Football Showdown",
-    category: "Sports",
-    poster:
-      "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1600&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80",
-    ],
-    fee: "₹1,000",
-    date: "February 22, 2025 • 4:30 PM",
-    venue: "Recreational Grounds",
-    min_team_size: 5,
-    max_team_size: 7,
-    rules: [
-      "Matches follow futsal regulations with rolling substitutions.",
-      "Studded boots are not permitted on the court.",
-      "Yellow/Red card system will be strictly enforced.",
-    ],
-  },
-  {
-    slug: "mystic-quiz-night",
-    name: "Mystic Quiz Night",
-    category: "Literary",
-    poster:
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=70",
-      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1600&q=80",
-    ],
-    fee: "₹600",
-    date: "February 23, 2025 • 5:30 PM",
-    venue: "Heritage Hall",
-    min_team_size: 1,
-    max_team_size: 2,
-    rules: [
-      "Mobile phones and smart watches must be switched off.",
-      "Team discussions are allowed only during allotted time windows.",
-      "In case of tie, visual rapid-fire round will decide the winner.",
-    ],
-  },
-  {
-    slug: "heritage-theatre-gala",
-    name: "Heritage Theatre Gala",
-    category: "Drama",
-    poster:
-      "https://images.unsplash.com/photo-1518133927612-6d0619f41f03?auto=format&fit=crop&w=1600&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1518133927612-6d0619f41f03?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80",
-    ],
-    fee: "₹2,000",
-    date: "February 24, 2025 • 6:00 PM",
-    venue: "Auditorium Royale",
-    min_team_size: 6,
-    max_team_size: 12,
-    rules: [
-      "Props must be declared during registration for safety clearance.",
-      "Background music tracks should be submitted 24 hours in advance.",
-      "Maximum staging time is 20 minutes including setup and teardown.",
-    ],
-  },
-];
+
 
 export default function Eventdetail() {
   const navigate = useNavigate();
@@ -102,13 +15,34 @@ export default function Eventdetail() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const event = useMemo(() => EVENT_DETAILS.find(entry => entry.slug === id), [id]);
+  // const event = useMemo(() => EVENT_DETAILS.find(entry => entry.slug === id), [id]);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const res = await api.get(`/events/${id}`);
+        console.log(res);
+        setEvent(res.data.event);
+      } catch (err) {
+        console.error("Failed to fetch event", err);
+        setEvent(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [id]);
+
+
   const eventTitle = event?.name ?? "Event";
-  const teamRange = event
-    ? event.min_team_size === event.max_team_size
-      ? `${event.min_team_size}`
-      : `${event.min_team_size} – ${event.max_team_size}`
-    : "-";
+  // const teamRange = event
+  //   ? event.min_team_size === event.max_team_size
+  //     ? `${event.min_team_size}`
+  //     : `${event.min_team_size} – ${event.max_team_size}`
+  //   : "Flexible";
   const eventType = event ? (event.min_team_size === 1 ? "Individual" : "Team") : "";
   const gallery = event?.gallery ?? (event ? [event.poster] : []);
 
@@ -185,30 +119,41 @@ export default function Eventdetail() {
                     Register Now
                   </button>
                 )}
-                <span className="event-fee">Entry Fee: {event.fee}</span>
+                <span className="event-fee">Entry Fee: {event.fees}</span>
               </div>
               <div className="event-info">
                 <div className="event-pills">
-                  <span className="event-pill">{event.category}</span>
+                  {event.tags?.map((tag) => (
+                    <span key={tag} className="event-pill">
+                      {tag}
+                    </span>
+                  ))}
                   <span className="event-pill">{eventType} Event</span>
                 </div>
+
                 <h1 className="event-detail-heading">{eventTitle}</h1>
                 <div className="event-basics">
                   <div>
                     <strong>Date</strong>
-                    <span>{event.date}</span>
+                    <span>
+                      {new Date(event.date).toLocaleString("en-IN", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
                   </div>
+
                   <div>
                     <strong>Venue</strong>
                     <span>{event.venue}</span>
                   </div>
                   <div>
                     <strong>Registration Fee</strong>
-                    <span>{event.fee}</span>
+                    <span>{event.fees}</span>
                   </div>
                   <div>
                     <strong>Team Size</strong>
-                    <span>{teamRange}</span>
+                    <span>{event.teamSize}</span>
                   </div>
                 </div>
 
@@ -239,8 +184,7 @@ export default function Eventdetail() {
         <RegistrationForm
           event={{
             ...event,
-            _id: event.slug, // Using slug as ID for static data
-            fees: event.fee,
+            ...normalizeTeamSize(event.teamSize), //adding extra fields - min_team_size & max_team_size
           }}
           onClose={() => setShowRegistrationForm(false)}
           onSuccess={(data) => {

@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import api from "../api/axios";
 
 export default function RegistrationForm({ event, onClose, onSuccess }) {
   const { user } = useContext(AuthContext);
@@ -67,52 +68,83 @@ export default function RegistrationForm({ event, onClose, onSuccess }) {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     setError("");
 
     // Validation
-    if (!teamName.trim()) {
-      setError("Team name is required");
-      return;
-    }
-
-    for (let i = 0; i < teamMembers.length; i++) {
-      const member = teamMembers[i];
-      if (!member.name.trim() || !member.email.trim() || !member.phone.trim()) {
-        setError(`Please fill all required fields for member ${i + 1}`);
+      if (!teamName.trim()) {
+        setError("Team name is required");
         return;
       }
-      if (!member.college && !member.roll) {
-        setError(`Please provide either college or roll number for member ${i + 1}`);
-        return;
-      }
-    }
 
-    setLoading(true);
+      for (let i = 0; i < teamMembers.length; i++) {
+        const member = teamMembers[i];
+        if (!member.name.trim() || !member.email.trim() || !member.phone.trim()) {
+          setError(`Please fill all required fields for member ${i + 1}`);
+          return;
+        }
+        if (!member.college && !member.roll) {
+          setError(`Please provide either college or roll number for member ${i + 1}`);
+          return;
+        }
+      }
+
+    try{
+      
+      setLoading(true);
+      console.log("entered try block");
+      const { data } = await api.post(
+            "/event-registration/team",
+            {
+              eventId: event._id,
+              teamName,
+              teamSize,
+              teamMembers,
+            }
+          );
+          console.log("called event registration api");
+
+          if (onSuccess) {
+            onSuccess(data);
+          }
+
+          onClose();
 
     // Simulate registration (frontend only - no backend call)
-    setTimeout(() => {
-      console.log("Registration Data:", {
-        eventId: event._id,
-        teamName,
-        teamSize,
-        teamMembers,
-      });
+    // setTimeout(() => {
+    //   console.log("Registration Data:", {
+    //     eventId: event._id,
+    //     teamName,
+    //     teamSize,
+    //     teamMembers,
+    //   });
 
-      setLoading(false);
+    //   setLoading(false);
       
-      if (onSuccess) {
-        onSuccess({
-          message: "Registration successful",
-          registration: {
-            eventId: event._id,
-            teamName,
-            teamSize,
-            teamMembers,
-          },
-        });
+    //   if (onSuccess) {
+    //     onSuccess({
+    //       message: "Registration successful",
+    //       registration: {
+    //         eventId: event._id,
+    //         teamName,
+    //         teamSize,
+    //         teamMembers,
+    //       },
+    //     });
+    //   }
+    // }, 1000); // Simulate network delay
+    
+        console.log("exiting try block");
+      } catch (err) {
+        console.log("Registration Error:", err);
+        setError(
+          err.response?.data?.message || "Registration failed"
+        );
+      } finally {
+        setLoading(false);
       }
-    }, 1000); // Simulate network delay
+
   };
 
   return (
