@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import "./config/dotenv.js";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -8,6 +7,7 @@ import authRouter from "./routers/authRouter.js";
 import connectDB from "./config/db.js";
 import eventRouter from "./routers/eventRouter.js";
 import eventRegistrationRouter from "./routers/eventRegistrationRouter.js";
+import paymentRouter from "./routers/paymentRouter.js";
 
 
 const app = express();
@@ -40,6 +40,7 @@ app.options(/.*/, cors(corsOptions));
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventRouter);
 app.use("/api/event-registration", eventRegistrationRouter);
+app.use("/api/payment",paymentRouter);
 
 
 app.listen(PORT, () => {

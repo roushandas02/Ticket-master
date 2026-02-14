@@ -7,6 +7,7 @@ export const AuthContext = createContext(null);
 const BACKEND_URL = "http://localhost:5000";
 const USER_STORAGE_KEY = "ticketmaster_user";
 const TOKEN_STORAGE_KEY = "ticketmaster_token";
+const VITE_STRIPE_PUBLISHABLE_KEY= "pk_test_51T0UDZDqZDVEZDcpUxxygy8EPIDAUSTISYpjX8KLMQGAThE0jD25zs1JMFz7M9jLweKIjPF6iRcAq9ytHfKL4bwt003e7K4hvr";
 
 const parseStoredUser = (value) => {
   if (!value) return null;
@@ -86,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       setUser,
       setToken,
+      VITE_STRIPE_PUBLISHABLE_KEY,
     }),
     [user, token]
   );

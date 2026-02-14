@@ -10,6 +10,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import Navbar2 from "../components/Navbar2";
 import { AuthContext } from "../context/AuthContext";
+import PaymentPage from "../pages/Payment/PaymentPage";
 
 export default function AppRouter() {
   const { user } = useContext(AuthContext);
@@ -23,6 +24,7 @@ export default function AppRouter() {
         <Route path="/" element={<Home />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<Eventdetail />} />
+        <Route path="/payment" element={<PaymentPage/>}/>
 
         {/* Auth Routes */}
         <Route

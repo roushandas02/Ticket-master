@@ -1,11 +1,15 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import api from "../api/axios";
+import { useNavigate } from "react-router-dom";
+
 
 export default function RegistrationForm({ event, onClose, onSuccess }) {
   const { user } = useContext(AuthContext);
   const [teamName, setTeamName] = useState("");
   const [teamSize, setTeamSize] = useState(event.min_team_size || 1);
+  const navigate = useNavigate();
+
   
   // Initialize team members array - first member with user data, others empty
   const initializeTeamMembers = () => {
@@ -68,82 +72,42 @@ export default function RegistrationForm({ event, onClose, onSuccess }) {
   };
 
   const handleSubmit = async (e) => {
-    
+
     e.preventDefault();
     setError("");
 
-    // Validation
-      if (!teamName.trim()) {
-        setError("Team name is required");
+    if (!teamName.trim()) {
+      setError("Team name is required");
+      return;
+    }
+
+    for (let i = 0; i < teamMembers.length; i++) {
+      const member = teamMembers[i];
+      if (!member.name.trim() || !member.email.trim() || !member.phone.trim()) {
+        setError(`Please fill all required fields for member ${i + 1}`);
         return;
       }
-
-      for (let i = 0; i < teamMembers.length; i++) {
-        const member = teamMembers[i];
-        if (!member.name.trim() || !member.email.trim() || !member.phone.trim()) {
-          setError(`Please fill all required fields for member ${i + 1}`);
-          return;
-        }
-        if (!member.college && !member.roll) {
-          setError(`Please provide either college or roll number for member ${i + 1}`);
-          return;
-        }
+      if (!member.college && !member.roll) {
+        setError(`Please provide either college or roll number for member ${i + 1}`);
+        return;
       }
+    }
 
-    try{
-      
-      setLoading(true);
-      console.log("entered try block");
-      const { data } = await api.post(
-            "/event-registration/team",
-            {
-              eventId: event._id,
-              teamName,
-              teamSize,
-              teamMembers,
-            }
-          );
-          console.log("called event registration api");
+    // Navigate to payment page instead of saving
+    onClose();
 
-          if (onSuccess) {
-            onSuccess(data);
-          }
-
-          onClose();
-
-    // Simulate registration (frontend only - no backend call)
-    // setTimeout(() => {
-    //   console.log("Registration Data:", {
-    //     eventId: event._id,
-    //     teamName,
-    //     teamSize,
-    //     teamMembers,
-    //   });
-
-    //   setLoading(false);
-      
-    //   if (onSuccess) {
-    //     onSuccess({
-    //       message: "Registration successful",
-    //       registration: {
-    //         eventId: event._id,
-    //         teamName,
-    //         teamSize,
-    //         teamMembers,
-    //       },
-    //     });
-    //   }
-    // }, 1000); // Simulate network delay
-    
-        console.log("exiting try block");
-      } catch (err) {
-        console.log("Registration Error:", err);
-        setError(
-          err.response?.data?.message || "Registration failed"
-        );
-      } finally {
-        setLoading(false);
-      }
+    setTimeout(() => {
+      navigate("/payment", {
+        state: {
+          eventId: event._id,
+          eventName: event.name,
+          amount: event.fees || event.fee,
+          teamName,
+          teamSize,
+          teamMembers,
+        },
+      });
+    }, 0);
 
   };
 

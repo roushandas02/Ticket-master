@@ -75,3 +75,7 @@ Whenever the Response is { message: 'Invalid or expired access token' }
 
 Whenever the reply is { message: "No refresh token" }
 ->Redirect them to login again
+
+
+
+Test Card Numbers: https://docs.stripe.com/testing
